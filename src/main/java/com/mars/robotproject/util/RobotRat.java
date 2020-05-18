@@ -1,15 +1,14 @@
 package com.mars.robotproject.util;
 
-import com.mars.robotproject.model.Location;
-import com.mars.robotproject.model.Position;
-import com.mars.robotproject.model._inputClass;
-import com.mars.robotproject.model._outputClass;
+import java.io.*;
 
-import java.util.ArrayList;
-import java.util.List;
-
-
-public class RobotRat {
+/**
+ * @author <b> Rick Miller </b>
+ * @version 1.0
+ *
+ */
+class RobotRat {
+    private BufferedReader console = null;
 
     private int pen_position = 0;
 
@@ -33,126 +32,15 @@ public class RobotRat {
 
     private static final int DOWN = 1;
 
-    private static List<String> samplesCollected = new ArrayList<>();
-    private static List<Location> visitedCells = new ArrayList<>();
-    private static long battery = 0;
 
-    private static String[] command1 = {"E", "R", "F"};
-    private static String[] command2 = {"E", "L", "F"};
-    private static String[] command3 = {"E", "L", "L", "F"};
-    private static String[] command4 = {"E", "B", "R", "F"};
-    private static String[] command5 = {"E", "B", "B", "L", "F"};
-    private static String[] command6 = {"E", "F", "F"};
-    private static String[] command7 = {"E", "F", "L", "F", "L", "F"};
-
-
-    public _outputClass Run(_inputClass input) {
-        Position currentPosition = input.getInitialPosition();
-        visitedCells.clear();
-        samplesCollected.clear();
-
+    public RobotRat(int rows, int cols) {
+        console = new BufferedReader(new InputStreamReader(System.in));
         direction = EAST;
-        pen_position = DOWN;
-        current_row = (int) currentPosition.getLocation().getY();
-        current_col = (int) currentPosition.getLocation().getX();
-        floor = new boolean[input.getTerrain().length][input.getTerrain()[0].length];
-        battery = input.getBattery();
+        pen_position = UP;
+        current_row = 0;
+        current_col = 0;
+        floor = new boolean[rows][cols];
         initializeFloor();
-        String[][] terrain = input.getTerrain();
-        String pFacing = currentPosition.getFacing();
-        visitedCells.add(new Location(current_row, current_col));
-
-
-        String[] commands = input.getCommands();
-        commandRun(terrain, commands, true);
-
-        _outputClass outputClass = new _outputClass();
-        Location[] visitedCellsArray = new Location[visitedCells.size()];
-        for (int i = 0; i < visitedCells.size(); i++) {
-            visitedCellsArray[i] = visitedCells.get(i);
-        }
-        outputClass.setVisitedCells(visitedCellsArray);
-        outputClass.setBattery(battery);
-        String dir = direction == 0 ? "North" : direction == 1 ? "South" : direction == 2 ? "East" : direction == 3 ? "West" : "";
-
-        outputClass.setFinalPosition(new Position(new Location(current_row, current_col), dir));
-
-        String[] samplesCollectedArray = new String[samplesCollected.size()];
-        for (int i = 0; i < samplesCollected.size(); i++) {
-            samplesCollectedArray[i] = samplesCollected.get(i);
-        }
-        outputClass.setSamplesCollected(samplesCollectedArray);
-        printFloor();
-        return outputClass;
-    }
-
-    private void commandProcess(String[][] terrain, String Islem) {
-
-        if (Islem.equals("S")) {
-            battery = battery - 8;
-            samplesCollected.add(terrain[current_row][current_col]);
-        }
-        if (Islem.equals("F")) {
-            battery = battery - 3;
-            move(1);
-            visitedCells.add(new Location(current_row, current_col));
-        }
-        if (Islem.equals("R")) {
-            battery = battery - 2;
-            turnRight();
-
-        }
-        if (Islem.equals("L")) {
-            battery = battery - 2;
-            turnLeft();
-        }
-        if (Islem.equals("B")) {
-            battery = battery - 3;
-            move(-1);
-        }
-        if (Islem.equals("E")) {
-            battery = battery - 1;
-            battery = battery + 10;
-        }
-    }
-
-
-    private boolean commandRun(String[][] terrain, String[] commands, boolean start) {
-        int i = 0;
-        for (i = 0; i < commands.length; i++) {
-
-            String command = commands[i];
-            String terC = terrain[current_row][current_col];
-
-            if (terC.equals("Obs") && start) {
-                battery = battery + 3;
-                visitedCells.remove(visitedCells.size() - 1);
-                current_row = (int) visitedCells.get(visitedCells.size()-1).getY();
-                current_col = (int) visitedCells.get(visitedCells.size()-1).getX();
-
-                if (commandRun(terrain, command1, true)) {System.out.println("1. Strategy was run");
-                } else if (commandRun(terrain, command2, true)) {System.out.println("2. Strategy was run");
-                } else if (commandRun(terrain, command3, true)) {System.out.println("3. Strategy was run");
-                } else if (commandRun(terrain, command4, true)) {System.out.println("4. Strategy was run");
-                } else if (commandRun(terrain, command5, true)) {System.out.println("5. Strategy was run");
-                } else if (commandRun(terrain, command6, true)) {System.out.println("6. Strategy was run");
-                } else if (commandRun(terrain, command7, true)) {System.out.println("7. Strategy was run");
-                }
-
-               /*for (int y = 0; y < command1.length; y++) {
-                   commandProcess(terrain, command1[y]);
-                }*/
-
-                for (int j = i; j < commands.length; j++) {
-                    String command2 = commands[i];
-                    commandProcess(terrain, command2);
-                }
-            } else {
-                commandProcess(terrain, command);
-            }
-
-        }
-        return (i) == commands.length ? true : false;
     }
 
     private void initializeFloor() {
@@ -163,45 +51,153 @@ public class RobotRat {
         }
     }
 
+    public void run() {
+        while (true) {
+            printMenu();
+            processMenuChoice();
+        }
+    }
+
+    private void printMenu() {
+        System.out.println("/n/n");
+        System.out.println(" Robot Rat Control Menu");
+        System.out.println("/n");
+        System.out.println(" 1. Pen Up");
+        System.out.println(" 2. Pen Down");
+        System.out.println(" 3. Turn Right");
+        System.out.println(" 4. Turn Left");
+        System.out.println(" 5. Move Forward");
+        System.out.println(" 6. Print Floor");
+        System.out.println(" 7. Exit");
+        System.out.println("/n/n/n");
+    }
+
+    private int getSpaces() {
+        int temp = 0;
+        try {
+            temp = Integer.parseInt(console.readLine());
+        } catch (Exception e) {
+            System.out.println("Spaces has been set to zero!");
+        }
+        return temp;
+    }
+
+    private char readChar() {
+        String s = null;
+        System.out.print("Please select from the menu: ");
+        try {
+            s = console.readLine();
+        } catch (Exception ignored) {
+        }
+        return s.charAt(0);
+    }
+
+    private void processMenuChoice() {
+
+        switch (readChar()) {
+            case '1':
+                setPenUp();
+                break;
+            case '2':
+                setPenDown();
+                break;
+            case '3':
+                turnRight();
+                break;
+            case '4':
+                turnLeft();
+                break;
+            case '5':
+                move();
+                break;
+            case '6':
+                printFloor();
+                break;
+            case '7':
+                exit();
+            default:
+                printErrorMessage();
+        }
+    }
+
+    /**
+     * Sets the RobotRat's pen to the UP position
+     */
     private void setPenUp() {
         pen_position = UP;
         System.out.println("The pen_position is UP");
     }
 
-
+    /**
+     * Sets the RobotRat's pen to the DOWN position
+     */
     private void setPenDown() {
         pen_position = DOWN;
         System.out.println("pen_position is DOWN");
     }
 
+    /**
+     * Turns the RobotRat to the right
+     */
     private void turnRight() {
-        setDirection(EAST, SOUTH, WEST, NORTH);
-    }
-
-    private void setDirection(int east, int south, int west, int north) {
         switch (direction) {
             case NORTH:
-                direction = east;
+                direction = EAST;
+                System.out.println("RobotRat facing EAST");
                 break;
             case EAST:
-                direction = south;
+                direction = SOUTH;
+                System.out.println("RobotRat facing SOUTH");
                 break;
             case SOUTH:
-                direction = west;
+                direction = WEST;
+                System.out.println("RobotRat facing WEST");
                 break;
             case WEST:
-                direction = north;
+                direction = NORTH;
+                System.out.println("RobotRat facing NORTH");
                 break;
             default:
                 direction = EAST;
+                System.out.println("RobotRat facing EAST");
+        }
+        System.out.println("turnRight() method");
+    }
+
+    /**
+     * Turns the RobotRat to the left
+     */
+    private void turnLeft() {
+        switch (direction) {
+            case NORTH:
+                direction = WEST;
+                System.out.println("RobotRat facing WEST");
+                break;
+            case EAST:
+                direction = NORTH;
+                System.out.println("RobotRat facing NORTH");
+                break;
+            case SOUTH:
+                direction = EAST;
+                System.out.println("RobotRat facing EAST");
+                break;
+            case WEST:
+                direction = SOUTH;
+                System.out.println("RobotRat facing SOUTH");
+                break;
+            default:
+                direction = EAST;
+                System.out.println("RobotRat facing EAST");
         }
     }
 
-    private void turnLeft() {
-        setDirection(WEST, NORTH, EAST, SOUTH);
-    }
-
-    private void move(int spaces) {
+    /**
+     * This method moves the RobotRat about the floor.
+     * @see #getSpaces()
+     */
+    private void move() {
+        System.out.print("Please enter spaces to move: ");
+        int spaces = getSpaces();
         switch (pen_position) {
             case UP:
                 switch (direction) {
@@ -270,7 +266,10 @@ public class RobotRat {
         }
     }
 
-
+    /**
+     * Prints the floor array pattern to the console
+     * @see #floor
+     */
     private void printFloor() {
         for (int i = 0; i < floor.length; i++) {
             for (int j = 0; j < floor[i].length; j++) {
@@ -283,5 +282,24 @@ public class RobotRat {
         }
     }
 
+    /**
+     * Exits the RobotRat program
+     * @see System#exit
+     */
+    private void exit() {
+        System.exit(0);
+    }
 
+    /**
+     * Prints error text message when invalid RobotRat menu item entered
+     */
+    private void printErrorMessage() {
+        System.out.println("Please enter a valid menu choice!");
+    }
+
+
+    public static void main(String[] args) {
+        RobotRat rr = new RobotRat(20, 20);
+        rr.run();
+    }
 }
