@@ -52,7 +52,7 @@ public class RobotRat {
         samplesCollected.clear();
 
         direction = EAST;
-        pen_position = DOWN;
+        pen_position = UP;
         current_row = (int) currentPosition.getLocation().getY();
         current_col = (int) currentPosition.getLocation().getX();
         floor = new boolean[input.getTerrain().length][input.getTerrain()[0].length];
@@ -283,5 +283,8 @@ public class RobotRat {
         }
     }
 
+    public static void main(String[] args) {
+        System.out.println();
+    }
 
 }
